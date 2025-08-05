@@ -1,5 +1,5 @@
+export * from './index';
 import type { ModuleOptions } from './index';
-import type { ConfigOptions } from './types';
 import type { vConfetti } from './runtime/directives/confetti';
 import type { ConfettiService } from './runtime/plugins/confetti.client';
 
@@ -20,3 +20,5 @@ declare module 'nuxt/app' {
     $confetti: ConfettiService;
   }
 }
+
+export { };

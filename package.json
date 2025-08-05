@@ -1,6 +1,6 @@
 {
   "name": "@waradu/confetti",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Confetti animations",
   "repository": "waradu/confetti",
   "homepage": "https://waradu.dev",
@@ -8,7 +8,7 @@
   "type": "module",
   "main": "./src/index.ts",
   "module": "./src/index.ts",
-  "types": "./src/index.ts",
+  "types": "./src/index.d.ts",
   "publishConfig": {
     "access": "public"
   },

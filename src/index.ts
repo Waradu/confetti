@@ -1,4 +1,4 @@
-/// <reference path="./types.d.ts" />
+/// <reference path="./index.d.ts" />
 
 import type { ConfigOptions } from "./types";
 import { name, version } from '../package.json';
