@@ -59,7 +59,7 @@ class Particle {
   }
 
   outOfBounds() {
-    return this.pos.y - 2 * this.size.x > window.innerHeight * 2;
+    return this.pos.y - 2 * this.size.x > window.innerHeight * 2 || this.opacity <= 0.01;
   }
 
   draw(ctx: CanvasRenderingContext2D) {
@@ -95,8 +95,12 @@ class Renderer {
   private ctx = this.canvas.getContext('2d')!;
   private bursts: Particle[][] = [];
   private last = performance.now();
+  private rafId: number | null = null;
+  private resizeHandler = () => this.resize();
+  private lastActive = performance.now();
+  private readonly IDLE_MS = 3000;
 
-  constructor(private zIndex: number) {
+  constructor(private zIndex: number, private onDestroy?: (z: number) => void) {
     this.resize();
     Object.assign(this.canvas.style, {
       position: 'fixed',
@@ -110,8 +114,8 @@ class Renderer {
       pointerEvents: 'none'
     });
     document.body.appendChild(this.canvas);
-    window.addEventListener('resize', () => this.resize());
-    requestAnimationFrame(() => this.loop());
+    window.addEventListener('resize', this.resizeHandler);
+    this.rafId = requestAnimationFrame(() => this.loop());
   }
 
   private resize() {
@@ -125,10 +129,12 @@ class Renderer {
 
   clearBursts() {
     this.bursts = [];
+    this.lastActive = performance.now();
   }
 
   addBurst(p: Particle[]) {
     this.bursts.push(p);
+    this.lastActive = performance.now();
   }
 
   private loop() {
@@ -142,7 +148,24 @@ class Renderer {
       return list.some(p => !p.outOfBounds());
     });
 
-    requestAnimationFrame(() => this.loop());
+    if (this.bursts.length === 0 && (performance.now() - this.lastActive) > this.IDLE_MS) {
+      this.destroy();
+      return;
+    }
+
+    this.rafId = requestAnimationFrame(() => this.loop());
+  }
+
+  destroy() {
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+
+    window.removeEventListener('resize', this.resizeHandler);
+    if (this.canvas.parentNode) this.canvas.parentNode.removeChild(this.canvas);
+
+    if (this.onDestroy) this.onDestroy(this.zIndex);
   }
 }
 
@@ -153,7 +176,9 @@ export class ConfettiService {
   private getRenderer(z: number) {
     let r = this.renderers.get(z);
     if (!r) {
-      r = new Renderer(z);
+      r = new Renderer(z, (zIdx) => {
+        this.renderers.delete(zIdx);
+      });
       this.renderers.set(z, r);
     }
     return r;
