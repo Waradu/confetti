@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <h1 v-confetti="{ fade: true, fadeSpeed: 4 }">Surprise 🎉</h1>
+    <h1 v-confetti="{ fade: true, fadeSpeed: 4, zIndex: -1 }">Surprise 🎉</h1>
     <h1 ref="test" @click="burstConfetti">Click me!</h1>
   </div>
 </template>
@@ -20,7 +20,6 @@ const burstConfetti = () => test.value && $confetti.burst(test.value, { destroyT
   font-family: sans-serif;
   user-select: none;
 }
-
 
 .container {
   display: flex;

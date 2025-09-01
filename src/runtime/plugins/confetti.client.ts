@@ -18,6 +18,7 @@ class Config {
   destroyTarget = true;
   fade = false;
   fadeSpeed = 1;
+  zIndex = 999999999;
 
   constructor(base: Required<ConfigOptions>, override: ConfigOptions = {}) {
     Object.assign(this, base, override);
@@ -95,7 +96,7 @@ class Renderer {
   private bursts: Particle[][] = [];
   private last = performance.now();
 
-  constructor() {
+  constructor(private zIndex: number) {
     this.resize();
     Object.assign(this.canvas.style, {
       position: 'fixed',
@@ -105,8 +106,8 @@ class Renderer {
       height: '100%',
       margin: '0',
       padding: '0',
-      zIndex: '999999999',
-      pointerEvents: 'none',
+      zIndex: String(this.zIndex),
+      pointerEvents: 'none'
     });
     document.body.appendChild(this.canvas);
     window.addEventListener('resize', () => this.resize());
@@ -120,6 +121,10 @@ class Renderer {
 
   clear() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  clearBursts() {
+    this.bursts = [];
   }
 
   addBurst(p: Particle[]) {
@@ -144,19 +149,24 @@ class Renderer {
 // exposed service
 export class ConfettiService {
   private base = useRuntimeConfig().public.confetti as Required<ConfigOptions>;
-  private renderer = new Renderer();
+  private renderers = new Map<number, Renderer>();
+  private getRenderer(z: number) {
+    let r = this.renderers.get(z);
+    if (!r) {
+      r = new Renderer(z);
+      this.renderers.set(z, r);
+    }
+    return r;
+  }
 
   /** burst on an element; optional overrides */
   burst(el: HTMLElement, cfg: ConfigOptions = {}) {
     const config = new Config(this.base, cfg);
     const rect = el.getBoundingClientRect();
-    const origin = new Vector2(
-      (rect.left + rect.width / 2) * 2,
-      (rect.top + rect.height / 2) * 2
-    );
-    const ps = Array.from({ length: config.particleCount },
-      () => new Particle(origin, config));
-    this.renderer.addBurst(ps);
+    const origin = new Vector2((rect.left + rect.width / 2) * 2, (rect.top + rect.height / 2) * 2);
+    const ps = Array.from({ length: config.particleCount }, () => new Particle(origin, config));
+    const renderer = this.getRenderer(config.zIndex);
+    renderer.addBurst(ps);
     if (cfg.destroyTarget ?? config.destroyTarget) {
       el.style.visibility = 'hidden';
     }
@@ -164,9 +174,10 @@ export class ConfettiService {
 
   /** clear all confetti */
   clear() {
-    // hack into renderer
-    (this.renderer as any).bursts = [];
-    this.renderer.clear();
+    this.renderers.forEach(r => {
+      r.clearBursts();
+      r.clear();
+    });
   }
 }
 

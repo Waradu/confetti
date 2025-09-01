@@ -17,6 +17,7 @@ const defaultOptions: Required<ConfigOptions> & { enabled: boolean; } = {
   destroyTarget: false,
   fade: false,
   fadeSpeed: 1,
+  zIndex: 999999999
 };
 
 export default defineNuxtModule<ModuleOptions>({
